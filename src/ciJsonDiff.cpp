@@ -185,7 +185,7 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
             // Iterate INTERSECTION items:
             if( !tIntersection.empty() ) {
                 for(set<string>::iterator it = tIntersection.begin(); it != tIntersection.end(); it++) {
-                    diffObjects( (*it), iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ), iParent );
+                    diffObjects( (*it), iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ), &tThis );
                 }
             }
             // Iterate FROM only items:
@@ -197,7 +197,7 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
                         ciJsonDiff::append( tDeletedValues, *it, tVal );
                     }
                 }
-                if( !tDeletedValues.empty() ) { append( *iParent, "_DELETED_", tDeletedValues ); }
+                if( !tDeletedValues.empty() ) { append( tThis, "_DELETED_", tDeletedValues ); }
             }
             // Iterate TO only items:
             if( !tToOnly.empty() ) {
@@ -208,15 +208,16 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
                         ciJsonDiff::append( tAddedValues, *it, tVal );
                     }
                 }
-                if( !tAddedValues.empty() ) { append( *iParent, "_ADDED_", tAddedValues ); }
+                if( !tAddedValues.empty() ) { append( tThis, "_ADDED_", tAddedValues ); }
             }
+            if( !tThis.isNull() && !tThis.empty() ) { ciJsonDiff::append( *iParent, iName, tThis ); }
         }
         // Value comparison
         else if( tFromType != VT_NULL ) {
             // TODO: HOW DO WE GET THE KEY NAME HERE????
             stringstream ss;
             ss << "ttt" << (rand() % 300);
-            diffValues( ss.str(), iFrom, iTo, iParent );
+            diffValues( ss.str(), iFrom, iTo, iParent ); // should iparent be switched to ithis????
             //diffValues( iFrom.getKey(), iFrom, iTo, iParent );
         }
     }
