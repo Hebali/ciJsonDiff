@@ -4,6 +4,8 @@
 #include "ciJsonDiff.h"
 
 ciJsonDiff::ciJsonDiff() {
+    // TODO REMOVE
+    srand(time(NULL));
 }
 
 string ciJsonDiff::diff(fs::path iFrom, fs::path iTo) {
@@ -15,96 +17,87 @@ string ciJsonDiff::diff(fs::path iFrom, fs::path iTo) {
 }
 
 string ciJsonDiff::diff(string iFrom, string iTo) {
-    JsonTree::ParseOptions tOptions;
-    tOptions.ignoreErrors( false );
+    // Parsing defaults:
+    bool tStrict   = true;
+    bool tComments = false;
     
     bool tErr = false;
-    JsonTree tFrom, tTo;
-    try { tFrom = JsonTree( iFrom, tOptions ); }
+    Json::Value tFrom, tTo;
+    try { tFrom = deserialize( iFrom, tStrict, tComments ); }
     catch(...) { tErr = true; console() << "Error parsing JSON: " << iFrom << endl; }
-    try { tTo = JsonTree( iTo, tOptions ); }
+    try { tTo = deserialize( iTo, tStrict, tComments ); }
     catch(...) { tErr = true; console() << "Error parsing JSON: " << iTo << endl; }
     
-    if( !tErr ) { return diff( tFrom, tTo ).serialize(); }
+    if( !tErr ) { return serialize( diff( tFrom, tTo ) ); }
     return "";
 }
 
-JsonTree ciJsonDiff::diff(JsonTree iFrom, JsonTree iTo) {
+Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo) {
     // This method compares two root-level JSON trees:
     
     // Prepare a JSON-encoded diff tree:
-    JsonTree tDiff;
+    Json::Value tDiff;
     // Check that each root node is an object:
-    if( iFrom.getNodeType() != JsonTree::NODE_OBJECT || iTo.getNodeType() != JsonTree::NODE_OBJECT ) { return tDiff; }
+    if( !iFrom.isObject() || !iTo.isObject() ) { return tDiff; }
     // Compare objects:
     diffObjects( "diff", iFrom, iTo, &tDiff );
     // Return diff tree:
     return tDiff;
 }
 
-void ciJsonDiff::diffValues(const string& iName, const JsonTree& iFrom, const JsonTree& iTo, JsonTree* iParent) {
-    int tFromValType = iFrom.getValueType();
-    int tToValType   = iTo.getValueType();
+void ciJsonDiff::diffValues(const string& iName, const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent) {
+    int tFromValType = getValueType( iFrom );
+    int tToValType   = getValueType( iTo );
     // Handle same value types
     if( tFromValType == tToValType ) {
-        if( tFromValType == JsonTree::VALUE_BOOL ) {
-            bool tFromValue = fromString<bool>( iFrom.getValue() );
-            bool tToValue   = fromString<bool>( iTo.getValue() );
+        if( tFromValType == VT_BOOL ) {
+            bool tFromValue = iFrom.asBool();
+            bool tToValue   = iTo.asBool();
             if( tFromValue != tToValue ) {
-                JsonTree tValDiff = JsonTree::makeArray( iName );
-                JsonTree tOld = JsonTree( "_OLD_", tFromValue );
-                JsonTree tNew = JsonTree( "_NEW_", tToValue );
-                tValDiff.pushBack( tOld );
-                tValDiff.pushBack( tNew );
-                iParent->pushBack( tValDiff );
+                Json::Value mValData;
+                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
+                ciJsonDiff::append( mValData, "_NEW_", tToValue );
+                ciJsonDiff::append( *iParent, iName, mValData );
             }
         }
-        else if( tFromValType == JsonTree::VALUE_DOUBLE ) {
-            double tFromValue = fromString<double>( iFrom.getValue() );
-            double tToValue   = fromString<double>( iTo.getValue() );
+        else if( tFromValType == VT_UINT ) {
+            unsigned int tFromValue = iFrom.asUInt();
+            unsigned int tToValue   = iTo.asUInt();
             if( tFromValue != tToValue ) {
-                JsonTree tValDiff = JsonTree::makeArray( iName );
-                JsonTree tOld = JsonTree( "_OLD_", tFromValue );
-                JsonTree tNew = JsonTree( "_NEW_", tToValue );
-                tValDiff.pushBack( tOld );
-                tValDiff.pushBack( tNew );
-                iParent->pushBack( tValDiff );
+                Json::Value mValData;
+                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
+                ciJsonDiff::append( mValData, "_NEW_", tToValue );
+                ciJsonDiff::append( *iParent, iName, mValData );
             }
         }
-        else if( tFromValType == JsonTree::VALUE_INT ) {
-            int tFromValue = fromString<int>( iFrom.getValue() );
-            int tToValue   = fromString<int>( iTo.getValue() );
+        else if( tFromValType == VT_INT ) {
+            int tFromValue = iFrom.asInt();
+            int tToValue   = iTo.asInt();
             if( tFromValue != tToValue ) {
-                JsonTree tValDiff = JsonTree::makeArray( iName );
-                JsonTree tOld = JsonTree( "_OLD_", tFromValue );
-                JsonTree tNew = JsonTree( "_NEW_", tToValue );
-                tValDiff.pushBack( tOld );
-                tValDiff.pushBack( tNew );
-                iParent->pushBack( tValDiff );
+                Json::Value mValData;
+                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
+                ciJsonDiff::append( mValData, "_NEW_", tToValue );
+                ciJsonDiff::append( *iParent, iName, mValData );
             }
         }
-        else if( tFromValType == JsonTree::VALUE_UINT ) {
-            unsigned int tFromValue = fromString<unsigned int>( iFrom.getValue() );
-            unsigned int tToValue   = fromString<unsigned int>( iTo.getValue() );
+        else if( tFromValType == VT_DOUBLE ) {
+            double tFromValue = iFrom.asDouble();
+            double tToValue   = iTo.asDouble();
             if( tFromValue != tToValue ) {
-                JsonTree tValDiff = JsonTree::makeArray( iName );
-                JsonTree tOld = JsonTree( "_OLD_", tFromValue );
-                JsonTree tNew = JsonTree( "_NEW_", tToValue );
-                tValDiff.pushBack( tOld );
-                tValDiff.pushBack( tNew );
-                iParent->pushBack( tValDiff );
+                Json::Value mValData;
+                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
+                ciJsonDiff::append( mValData, "_NEW_", tToValue );
+                ciJsonDiff::append( *iParent, iName, mValData );
             }
         }
-        else if( tFromValType == JsonTree::VALUE_STRING ) {
-            string tFromValue = iFrom.getValue();
-            string tToValue   = iTo.getValue();
+        else if( tFromValType == VT_STRING ) {
+            string tFromValue = iFrom.asString();
+            string tToValue   = iTo.asString();
             if( tFromValue.compare( tToValue ) != 0 ) {
-                JsonTree tValDiff = JsonTree::makeArray( iName );
-                JsonTree tOld = JsonTree( "_OLD_", tFromValue );
-                JsonTree tNew = JsonTree( "_NEW_", tToValue );
-                tValDiff.pushBack( tOld );
-                tValDiff.pushBack( tNew );
-                iParent->pushBack( tValDiff );
+                Json::Value mValData;
+                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
+                ciJsonDiff::append( mValData, "_NEW_", tToValue );
+                ciJsonDiff::append( *iParent, iName, mValData );
             }
         }
         else {
@@ -113,33 +106,28 @@ void ciJsonDiff::diffValues(const string& iName, const JsonTree& iFrom, const Js
     }
     // Handle different value types
     else {
-        JsonTree tValDiff = JsonTree::makeArray( iName );
-
-        JsonTree tOld = JsonTree::makeArray( "_OLD_" );
-        tOld.pushBack( iFrom );
-        JsonTree tNew = JsonTree::makeArray( "_NEW_" );
-        tNew.pushBack( iTo );
-        
-        tValDiff.pushBack( tOld );
-        tValDiff.pushBack( tNew );
-        iParent->pushBack( tValDiff );
+        Json::Value mValData;
+        ciJsonDiff::append( mValData, "_OLD_", iFrom );
+        ciJsonDiff::append( mValData, "_NEW_", iTo );
+        ciJsonDiff::append( *iParent, iName, mValData );
     }
 }
 
-void ciJsonDiff::diffObjects(const string& iName, const JsonTree& iFrom, const JsonTree& iTo, JsonTree* iParent) {
+void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent) {
     // Get node types:
-    int tFromType = iFrom.getNodeType();
-    int tToType   = iTo.getNodeType();
+    int tFromType = getValueType( iFrom );
+    int tToType   = getValueType( iTo );
     
     // Compare like types:
     if( tFromType == tToType ) {
-        bool tIsArr = (tFromType == JsonTree::NODE_ARRAY);
-        bool tIsObj = (tFromType == JsonTree::NODE_OBJECT);
+        bool tIsArr = (tFromType == VT_ARRAY);
+        bool tIsObj = (tFromType == VT_OBJECT);
         
         // Array comparison:
         if( tIsArr ) {
-            size_t tFromCount = iFrom.getChildCount();
-            size_t tToCount   = iTo.getChildCount();
+            /* TODO:
+            size_t tFromCount = iFrom.size();
+            size_t tToCount   = iTo.size();
             size_t tMinCount  = min( tFromCount, tToCount );
             size_t tMaxCount  = max( tFromCount, tToCount );
             
@@ -147,7 +135,7 @@ void ciJsonDiff::diffObjects(const string& iName, const JsonTree& iFrom, const J
             JsonTree tContainerDelta = JsonTree::makeArray( iName );
             for(size_t i = 0; i < tMinCount; i++) {
                 JsonTree tItem;
-                diffObjects( "**", iFrom.getChild( i ), iTo.getChild( i ), &tItem );
+                diffObjects( "", iFrom.getChild( i ), iTo.getChild( i ), &tItem );
                 if( tItem.hasChildren() ) {
                     stringstream ss; ss << i;
                     //tItem.getChild(0).setKey( ss.str() );
@@ -168,16 +156,20 @@ void ciJsonDiff::diffObjects(const string& iName, const JsonTree& iFrom, const J
             
             // Add container
             if( tContainerDelta.hasChildren() ) { iParent->pushBack( tContainerDelta ); }
+            */
         }
         // Object comparison:
         else if( tIsObj ) {
+            Json::Value::Members tFromMembers = iFrom.getMemberNames();
+            Json::Value::Members tToMembers   = iTo.getMemberNames();
+            
             // Get key sets for each tree:
             set<string> tFromSet, tToSet;
-            for(JsonTree::ConstIter item = iFrom.begin(); item != iFrom.end(); ++item) {
-                tFromSet.insert( item->getKey() );
+            for(Json::Value::Members::iterator item = tFromMembers.begin(); item < tFromMembers.end(); ++item) {
+                tFromSet.insert( *item );
             }
-            for(JsonTree::ConstIter item = iTo.begin(); item != iTo.end(); ++item) {
-                tToSet.insert( item->getKey() );
+            for(Json::Value::Members::iterator item = tToMembers.begin(); item < tToMembers.end(); ++item) {
+                tToSet.insert( *item );
             }
             
             // Get intersections and differences:
@@ -191,45 +183,41 @@ void ciJsonDiff::diffObjects(const string& iName, const JsonTree& iFrom, const J
             // Iterate INTERSECTION items:
             if( !tIntersection.empty() ) {
                 for(set<string>::iterator it = tIntersection.begin(); it != tIntersection.end(); it++) {
-                    diffObjects( (*it), iFrom.getChild( *it ), iTo.getChild( *it ), iParent );
+                    diffObjects( (*it), iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ), iParent );
                 }
             }
-            // TODO: THESE ARENT HAPPENING IN RECURSIVE LEVELS????
-            // look at contents of pushBack()... kinda messy?...overriding key may not be viable...
             // Iterate FROM only items:
             if( !tFromOnly.empty() ) {
-                JsonTree tContainerDeleted = JsonTree::makeArray( "_DELETED_" );
+                vector<Json::Value> tDeletedValues;
                 for(set<string>::iterator it = tFromOnly.begin(); it != tFromOnly.end(); it++) {
-                    tContainerDeleted.pushBack( iFrom.getChild( *it ) );
+                    tDeletedValues.push_back( iFrom.get( *it, Json::Value::null ) );
                 }
-                if( tContainerDeleted.hasChildren() ) { iParent->pushBack( tContainerDeleted ); }
+                if( !tDeletedValues.empty() ) { append( *iParent, "_DELETED_", tDeletedValues ); }
             }
             // Iterate TO only items:
             if( !tToOnly.empty() ) {
-                JsonTree tContainerAdded = JsonTree::makeArray( "_ADDED_" );
+                vector<Json::Value> tAddedValues;
                 for(set<string>::iterator it = tToOnly.begin(); it != tToOnly.end(); it++) {
-                    tContainerAdded.pushBack( iTo.getChild( *it ) );
+                    tAddedValues.push_back( iTo.get( *it, Json::Value::null ) );
                 }
-                if( tContainerAdded.hasChildren() ) { iParent->pushBack( tContainerAdded ); }
+                if( !tAddedValues.empty() ) { append( *iParent, "_ADDED_", tAddedValues ); }
             }
         }
         // Value comparison
-        else if( tFromType == JsonTree::NODE_VALUE ) {
-            diffValues( iFrom.getKey(), iFrom, iTo, iParent );
+        else if( tFromType != VT_NULL ) {
+            // TODO: HOW DO WE GET THE KEY NAME HERE????
+            stringstream ss;
+            ss << "ttt" << (rand() % 300);
+            diffValues( ss.str(), iFrom, iTo, iParent );
+            //diffValues( iFrom.getKey(), iFrom, iTo, iParent );
         }
     }
     // Otherwise, delete old and add new:
     else {
-        JsonTree tObjDiff = JsonTree::makeArray( iName );
-        
-        JsonTree tOld = JsonTree::makeArray( "_OLD_" );
-        tOld.pushBack( iFrom );
-        JsonTree tNew = JsonTree::makeArray( "_NEW_" );
-        tNew.pushBack( iTo );
-        
-        tObjDiff.pushBack( tOld );
-        tObjDiff.pushBack( tNew );
-        iParent->pushBack( tObjDiff );
+        Json::Value mValData;
+        ciJsonDiff::append( mValData, "_OLD_", iFrom );
+        ciJsonDiff::append( mValData, "_NEW_", iTo );
+        ciJsonDiff::append( *iParent, iName, mValData );
     }
 }
 
@@ -254,6 +242,7 @@ void ciJsonDiff::append(Json::Value & object, const string & key, float value) {
 void ciJsonDiff::append(Json::Value & object, const string & key, int32_t value) { object[key] = Json::Value(value); }
 void ciJsonDiff::append(Json::Value & object, const string & key, string value) { object[key] = Json::Value(value.c_str()); }
 void ciJsonDiff::append(Json::Value & object, const string & key, uint32_t value) { object[key] = Json::Value(value); }
+void ciJsonDiff::append(Json::Value & object, const string & key, Json::Value value) { object[key] = value; }
 
 void ciJsonDiff::append(Json::Value & object, const string & key, vector<bool> values)
 {
@@ -296,15 +285,30 @@ void ciJsonDiff::append(Json::Value & object, const string & key, vector<Json::V
         object[key].append(* memberIt);
 }
 
-Json::Value ciJsonDiff::deserialize(const string & value) {
-    // Parse and return data
-    Json::Reader reader;
+Json::Value ciJsonDiff::deserialize(const string& iValue, bool iStrict, bool iComments) {
+    Json::Features features;
+	features.allowComments_ = iComments;
+	features.strictRoot_ = iStrict;
+	Json::Reader reader( features );    
     Json::Value root;
-    reader.parse(value, root);
+    try { reader.parse( iValue, root ); }
+    catch(...) { console() << "Error deserializing JSON: " << iValue << endl; }
     return root;
 }
 
-string ciJsonDiff::serialize(const Json::Value & value) {
+string ciJsonDiff::serialize(const Json::Value& iValue) {
     Json::StyledWriter writer;
-    return writer.write(value);
+    return writer.write( iValue );
+}
+
+int ciJsonDiff::getValueType(const Json::Value& iValue) {
+    if     ( iValue.isNull() )     { return VT_NULL; }
+    else if( iValue.isArray() )    { return VT_ARRAY; }
+    else if( iValue.isObject() )   { return VT_OBJECT; }
+    else if( iValue.isBool() )     { return VT_BOOL; }
+    else if( iValue.isUInt() )     { return VT_UINT; }
+    else if( iValue.isInt() )      { return VT_INT; }
+    else if( iValue.isDouble() )   { return VT_DOUBLE; }
+    else if( iValue.isString() )   { return VT_STRING; }
+    return VT_NULL;
 }
