@@ -160,6 +160,8 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
         }
         // Object comparison:
         else if( tIsObj ) {
+            Json::Value tThis;
+            
             Json::Value::Members tFromMembers = iFrom.getMemberNames();
             Json::Value::Members tToMembers   = iTo.getMemberNames();
             
@@ -188,17 +190,23 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
             }
             // Iterate FROM only items:
             if( !tFromOnly.empty() ) {
-                vector<Json::Value> tDeletedValues;
+                Json::Value tDeletedValues;
                 for(set<string>::iterator it = tFromOnly.begin(); it != tFromOnly.end(); it++) {
-                    tDeletedValues.push_back( iFrom.get( *it, Json::Value::null ) );
+                    Json::Value tVal = iFrom.get( *it, Json::Value::null );
+                    if( !tVal.isNull() ) {
+                        ciJsonDiff::append( tDeletedValues, *it, tVal );
+                    }
                 }
                 if( !tDeletedValues.empty() ) { append( *iParent, "_DELETED_", tDeletedValues ); }
             }
             // Iterate TO only items:
             if( !tToOnly.empty() ) {
-                vector<Json::Value> tAddedValues;
+                Json::Value tAddedValues;
                 for(set<string>::iterator it = tToOnly.begin(); it != tToOnly.end(); it++) {
-                    tAddedValues.push_back( iTo.get( *it, Json::Value::null ) );
+                    Json::Value tVal = iTo.get( *it, Json::Value::null );
+                    if( !tVal.isNull() ) {
+                        ciJsonDiff::append( tAddedValues, *it, tVal );
+                    }
                 }
                 if( !tAddedValues.empty() ) { append( *iParent, "_ADDED_", tAddedValues ); }
             }
