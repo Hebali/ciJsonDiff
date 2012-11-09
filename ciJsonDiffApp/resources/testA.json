@@ -1,0 +1,29 @@
+{
+   "mBoolSame" : true,
+   "mUIntSame" : 11,
+   "mIntSame" : -12,
+   "mStrSame" : "testing same…",
+   "mArrSame" : [ 0.11, 1.11, 2.11, 3.11 ],
+   "mObjSame" : {
+   	   "mBoolChiSame" : false,
+	   "mUIntChiSame" : 436,
+	   "mIntChiSame" : 219,
+	   "mStrChiSame" : "testing ChiSame…",
+	   "mArrChiSame" : [ 0.22, 1.22, 2.22, 3.22 ]
+   },
+   "mBoolDiff" : true,
+   "mUIntDiff" : 13,
+   "mIntDiff" : -14,
+   "mStrDiff" : "testing diff…",
+   "mArrDiff" : [ 0.23, 1.23, 2.23, 3.23 ],
+   "mObjDiff" : {
+   	   "mBoolChiDiff" : false,
+	   "mUIntChiDiff" : 15,
+	   "mIntChiDiff" : 16,
+	   "mStrChiDiff" : "testing ChiDiff…",
+	   "mArrChiDiff" : [ 0.24, 1.24, 2.24, 3.24 ]
+   },
+   "mBoolOld" : false,
+   "mUIntOld" : 15,
+   "mIntOld" : -16
+}

@@ -15,6 +15,8 @@
 		00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
 		00BAE65A0E7ED9C10018A608 /* ciJsonDiffApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00BAE6590E7ED9C10018A608 /* ciJsonDiffApp.cpp */; };
 		00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 00CCAF14116A9FEE008396D5 /* CinderApp.icns */; };
+		3264E803164DC23900EF8056 /* testA.json in Resources */ = {isa = PBXBuildFile; fileRef = 3264E801164DC23900EF8056 /* testA.json */; };
+		3264E804164DC23900EF8056 /* testB.json in Resources */ = {isa = PBXBuildFile; fileRef = 3264E802164DC23900EF8056 /* testB.json */; };
 		32AB2A51164AA45200D88D82 /* ciJsonDiff.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 32AB2A50164AA45200D88D82 /* ciJsonDiff.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
@@ -35,6 +37,8 @@
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		3264E801164DC23900EF8056 /* testA.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = testA.json; path = ../resources/testA.json; sourceTree = "<group>"; };
+		3264E802164DC23900EF8056 /* testB.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = testB.json; path = ../resources/testB.json; sourceTree = "<group>"; };
 		32AB2A4E164AA45200D88D82 /* ciJsonDiff.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciJsonDiff.h; sourceTree = "<group>"; };
 		32AB2A50164AA45200D88D82 /* ciJsonDiff.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ciJsonDiff.cpp; sourceTree = "<group>"; };
 		32CA4F630368D1EE00C91783 /* ciJsonDiffApp_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciJsonDiffApp_Prefix.pch; sourceTree = "<group>"; };
@@ -134,6 +138,8 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				3264E801164DC23900EF8056 /* testA.json */,
+				3264E802164DC23900EF8056 /* testB.json */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				00CCAF14116A9FEE008396D5 /* CinderApp.icns */,
 			);
@@ -215,6 +221,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				00CCAF15116A9FEE008396D5 /* CinderApp.icns in Resources */,
+				3264E803164DC23900EF8056 /* testA.json in Resources */,
+				3264E804164DC23900EF8056 /* testB.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

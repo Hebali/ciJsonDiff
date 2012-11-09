@@ -1,0 +1,35 @@
+{
+   "mBoolSame" : true,
+   "mUIntSame" : 11,
+   "mIntSame" : -12,
+   "mStrSame" : "testing same…",
+   "mArrSame" : [ 0.11, 1.11, 2.11, 3.11 ],
+   "mObjSame" : {
+   	   "mBoolChiSame" : false,
+	   "mUIntChiSame" : 436,
+	   "mIntChiSame" : 219,
+	   "mStrChiSame" : "testing ChiSame…",
+	   "mArrChiSame" : [ 0.22, 1.22, 2.22, 3.22 ]
+   },
+   "mBoolDiff" : false,
+   "mUIntDiff" : 131,
+   "mIntDiff" : -141,
+   "mStrDiff" : "testing diff1…",
+   "mArrDiff" : [ 0.231, 1.23, 2.231, 3.23, 4.0 ],
+   "mObjDiff" : {
+   	   "mBoolChiDiff" : true,
+	   "mUIntChiDiff" : 151,
+	   "mIntChiDiff" : 161,
+	   "mStrChiDiff" : "testing ChiDiff1…",
+	   "mArrChiDiff" : [ 0.24, 1.241, 2.24, 3.241 ],
+	   "mArrChiDiffA" : [ 0.34, 1.341, 2.34, 3.341 ],
+	   "mObjDiffCHIII" : {
+	   		"mIntDiffIIII" : 2222
+	   },
+	   "mDoubleChiDiffIIII" : 2398.01
+   },
+   "mBoolNew" : false,
+   "mUIntNew" : 151,
+   "mIntNew" : -161,
+   "mArrNewA" : [ 0.44, 1.441, 2.44, 3.441 ]
+}
