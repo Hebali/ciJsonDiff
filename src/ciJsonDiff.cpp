@@ -1,5 +1,33 @@
-/*             ciJsonDiff              */
-/*          Patrick J. Hebron          */
+/*
+ ciJsonDiff
+ by Patrick J. Hebron
+ 
+ Copyright (c) 2012, Patrick J. Hebron
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+ 
+ * Redistributions of source code must retain the above copyright
+ notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+ * Neither the name of the Patrick J. Hebron nor the
+ names of its contributors may be used to endorse or promote products
+ derived from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL PATRICK J. HEBRON BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #include "ciJsonDiff.h"
 
@@ -86,6 +114,7 @@ void ciJsonDiff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Js
     }
     // Handle different value types
     else {
+        // TODO: Check this case:
         push( *iParent, "_OLD_", iFrom );
         push( *iParent, "_NEW_", iTo );
     }
@@ -105,38 +134,31 @@ Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value&
         
         // Array comparison:
         if( tIsArr ) {
-            /* TODO:
             size_t tFromCount = iFrom.size();
             size_t tToCount   = iTo.size();
             size_t tMinCount  = min( tFromCount, tToCount );
             size_t tMaxCount  = max( tFromCount, tToCount );
-            
+                        
             // Handle common indices:
-            JsonTree tContainerDelta = JsonTree::makeArray( iName );
             for(size_t i = 0; i < tMinCount; i++) {
-                JsonTree tItem;
-                diffObjects( "", iFrom.getChild( i ), iTo.getChild( i ), &tItem );
-                if( tItem.hasChildren() ) {
+                Json::Value tItem = diffObjects( iFrom.get( i, Json::Value::null ), iTo.get( i, Json::Value::null ) );
+                if( !tItem.isNull() && !tItem.empty() ) {
                     stringstream ss; ss << i;
-                    //tItem.getChild(0).setKey( ss.str() );
-                    if( tItem.getChild(0).hasChildren() ) { tContainerDelta.pushBack( tItem.getChild(0) ); }
+                    push( tThis, ss.str(), tItem );
                 }
             }
             
             // Handle non-common indices:
             bool iFromIsLonger = ( tFromCount > tToCount );
             for(size_t i = tMinCount; i < tMaxCount; i++) {
-                stringstream ss; ss << i;
-                JsonTree tArrItem  = JsonTree::makeArray( ss.str() );
-                JsonTree tOldOrNew = ( iFromIsLonger ? iFrom.getChild( i ) : iTo.getChild( i ) );
-                //tOldOrNew.setKey( iFromIsLonger ? "_DELETED_" : "_ADDED_" );
-                tArrItem.pushBack( tOldOrNew );
-                if( tArrItem.hasChildren() ) { tContainerDelta.pushBack( tArrItem ); }
+                Json::Value tItem;
+                if( iFromIsLonger ) { push( tItem, "_DELETED_", iFrom.get( i, Json::Value::null ) ); }
+                else                { push( tItem, "_ADDED_", iTo.get( i, Json::Value::null ) ); }
+                if( !tItem.isNull() && !tItem.empty() ) {
+                    stringstream ss; ss << i;
+                    push( tThis, ss.str(), tItem );
+                }
             }
-            
-            // Add container
-            if( tContainerDelta.hasChildren() ) { iParent->pushBack( tContainerDelta ); }
-            */
         }
         // Object comparison:
         else if( tIsObj ) {
@@ -164,7 +186,7 @@ Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value&
             if( !tIntersection.empty() ) {
                 for(set<string>::iterator it = tIntersection.begin(); it != tIntersection.end(); it++) {
                     Json::Value tVal = diffObjects( iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ), *it );
-                    if( !tVal.isNull() ) { push( tThis, *it, tVal ); }
+                    if( !tVal.isNull() && !tVal.empty() ) { push( tThis, *it, tVal ); }
                 }
             }
             // Iterate FROM only items:
@@ -193,6 +215,7 @@ Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value&
     }
     // Otherwise, delete old and add new:
     else {
+        // TODO: Check this case...
         Json::Value mValData;
         push( mValData, "_OLD_", iFrom );
         push( mValData, "_NEW_", iTo );
