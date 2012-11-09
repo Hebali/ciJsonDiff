@@ -1,6 +1,7 @@
 /*
  ciJsonDiff
  by Patrick J. Hebron
+ http://patrickhebron.com
  
  Copyright (c) 2012, Patrick J. Hebron
  All rights reserved.
