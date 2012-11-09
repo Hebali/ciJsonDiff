@@ -67,10 +67,10 @@ public:
     //////////
     
 protected:
-    static void     diffValues(const string& iName, const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent);
-    static void     diffObjects(const string& iName, const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent);
+    static Json::Value      diffObjects(const string& iName, const Json::Value& iFrom, const Json::Value& iTo);
+    static void             diffValues(const string& iName, const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent);
     
-    static int      getValueType(const Json::Value& iValue);
+    static int              getValueType(const Json::Value& iValue);
     
-    static bool     readFile(string iFileName, string* iFileOutput);
+    static bool             readFile(string iFileName, string* iFileOutput);
 };

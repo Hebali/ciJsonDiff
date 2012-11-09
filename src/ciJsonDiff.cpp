@@ -35,12 +35,14 @@ string ciJsonDiff::diff(string iFrom, string iTo) {
 Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo) {
     // This method compares two root-level JSON trees:
     
+    // Need to move up one level... iParent becomes tThis (the return value).
+    
     // Prepare a JSON-encoded diff tree:
     Json::Value tDiff;
     // Check that each root node is an object:
     if( !iFrom.isObject() || !iTo.isObject() ) { return tDiff; }
     // Compare objects:
-    diffObjects( "diff", iFrom, iTo, &tDiff );
+    tDiff = diffObjects( "diff", iFrom, iTo );
     // Return diff tree:
     return tDiff;
 }
@@ -95,9 +97,9 @@ void ciJsonDiff::diffValues(const string& iName, const Json::Value& iFrom, const
             string tToValue   = iTo.asString();
             if( tFromValue.compare( tToValue ) != 0 ) {
                 Json::Value mValData;
-                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
-                ciJsonDiff::append( mValData, "_NEW_", tToValue );
-                ciJsonDiff::append( *iParent, iName, mValData );
+                ciJsonDiff::append( *iParent, "_OLD_", tFromValue );
+                ciJsonDiff::append( *iParent, "_NEW_", tToValue );
+                //ciJsonDiff::append( *iParent, iName, mValData );
             }
         }
         else {
@@ -113,7 +115,9 @@ void ciJsonDiff::diffValues(const string& iName, const Json::Value& iFrom, const
     }
 }
 
-void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent) {
+Json::Value ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, const Json::Value& iTo) {
+    Json::Value tThis;
+    
     // Get node types:
     int tFromType = getValueType( iFrom );
     int tToType   = getValueType( iTo );
@@ -160,8 +164,6 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
         }
         // Object comparison:
         else if( tIsObj ) {
-            Json::Value tThis;
-            
             Json::Value::Members tFromMembers = iFrom.getMemberNames();
             Json::Value::Members tToMembers   = iTo.getMemberNames();
             
@@ -185,7 +187,8 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
             // Iterate INTERSECTION items:
             if( !tIntersection.empty() ) {
                 for(set<string>::iterator it = tIntersection.begin(); it != tIntersection.end(); it++) {
-                    diffObjects( (*it), iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ), &tThis );
+                    Json::Value tVal = diffObjects( *it, iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ) );
+                    if( !tVal.isNull() ) { append( tThis, *it, tVal ); }
                 }
             }
             // Iterate FROM only items:
@@ -193,32 +196,23 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
                 Json::Value tDeletedValues;
                 for(set<string>::iterator it = tFromOnly.begin(); it != tFromOnly.end(); it++) {
                     Json::Value tVal = iFrom.get( *it, Json::Value::null );
-                    if( !tVal.isNull() ) {
-                        ciJsonDiff::append( tDeletedValues, *it, tVal );
-                    }
+                    if( !tVal.isNull() ) { ciJsonDiff::append( tDeletedValues, *it, tVal ); }
                 }
-                if( !tDeletedValues.empty() ) { append( tThis, "_DELETED_", tDeletedValues ); }
+                if( !tDeletedValues.isNull() && !tDeletedValues.empty() ) { append( tThis, "_DELETED_", tDeletedValues ); }
             }
             // Iterate TO only items:
             if( !tToOnly.empty() ) {
                 Json::Value tAddedValues;
                 for(set<string>::iterator it = tToOnly.begin(); it != tToOnly.end(); it++) {
                     Json::Value tVal = iTo.get( *it, Json::Value::null );
-                    if( !tVal.isNull() ) {
-                        ciJsonDiff::append( tAddedValues, *it, tVal );
-                    }
+                    if( !tVal.isNull() ) { ciJsonDiff::append( tAddedValues, *it, tVal ); }
                 }
-                if( !tAddedValues.empty() ) { append( tThis, "_ADDED_", tAddedValues ); }
+                if( !tAddedValues.isNull() && !tAddedValues.empty() ) { append( tThis, "_ADDED_", tAddedValues ); }
             }
-            if( !tThis.isNull() && !tThis.empty() ) { ciJsonDiff::append( *iParent, iName, tThis ); }
         }
-        // Value comparison
+        // Value comparison:
         else if( tFromType != VT_NULL ) {
-            // TODO: HOW DO WE GET THE KEY NAME HERE????
-            stringstream ss;
-            ss << "ttt" << (rand() % 300);
-            diffValues( ss.str(), iFrom, iTo, iParent ); // should iparent be switched to ithis????
-            //diffValues( iFrom.getKey(), iFrom, iTo, iParent );
+            diffValues( iName, iFrom, iTo, &tThis );
         }
     }
     // Otherwise, delete old and add new:
@@ -226,8 +220,10 @@ void ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, cons
         Json::Value mValData;
         ciJsonDiff::append( mValData, "_OLD_", iFrom );
         ciJsonDiff::append( mValData, "_NEW_", iTo );
-        ciJsonDiff::append( *iParent, iName, mValData );
+        ciJsonDiff::append( tThis, iName, mValData );
     }
+    
+    return tThis;
 }
 
 bool ciJsonDiff::readFile(string iFileName, string* iFileOutput) {
