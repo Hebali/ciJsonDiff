@@ -4,50 +4,41 @@
 #include "ciJsonDiff.h"
 
 ciJsonDiff::ciJsonDiff() {
-    // TODO REMOVE
-    srand(time(NULL));
 }
 
-string ciJsonDiff::diff(fs::path iFrom, fs::path iTo) {
+string ciJsonDiff::diff(fs::path iFrom, fs::path iTo, bool iStrict, bool iComments) {
     string tFrom, tTo;
     if( readFile( iFrom.string(), &tFrom ) && readFile( iTo.string(), &tTo ) ) {
-        return diff( tFrom, tTo );
+        return diff( tFrom, tTo, iStrict, iComments );
     }
     return "";
 }
 
-string ciJsonDiff::diff(string iFrom, string iTo) {
-    // Parsing defaults:
-    bool tStrict   = true;
-    bool tComments = false;
-    
-    bool tErr = false;
+string ciJsonDiff::diff(string iFrom, string iTo, bool iStrict, bool iComments) {
+    bool tErrFrom = false;
+    bool tErrTo   = false;
     Json::Value tFrom, tTo;
-    try { tFrom = deserialize( iFrom, tStrict, tComments ); }
-    catch(...) { tErr = true; console() << "Error parsing JSON: " << iFrom << endl; }
-    try { tTo = deserialize( iTo, tStrict, tComments ); }
-    catch(...) { tErr = true; console() << "Error parsing JSON: " << iTo << endl; }
+    tFrom = deserialize( iFrom, &tErrFrom, iStrict, iComments );
+    tTo   = deserialize( iTo, &tErrTo, iStrict, iComments );
     
-    if( !tErr ) { return serialize( diff( tFrom, tTo ) ); }
+    if( !tErrFrom && !tErrTo ) { return serialize( diff( tFrom, tTo ) ); }
     return "";
 }
 
 Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo) {
     // This method compares two root-level JSON trees:
     
-    // Need to move up one level... iParent becomes tThis (the return value).
-    
     // Prepare a JSON-encoded diff tree:
     Json::Value tDiff;
     // Check that each root node is an object:
     if( !iFrom.isObject() || !iTo.isObject() ) { return tDiff; }
     // Compare objects:
-    tDiff = diffObjects( "diff", iFrom, iTo );
+    tDiff = diffObjects( iFrom, iTo );
     // Return diff tree:
     return tDiff;
 }
 
-void ciJsonDiff::diffValues(const string& iName, const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent) {
+void ciJsonDiff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent) {
     int tFromValType = getValueType( iFrom );
     int tToValType   = getValueType( iTo );
     // Handle same value types
@@ -56,66 +47,51 @@ void ciJsonDiff::diffValues(const string& iName, const Json::Value& iFrom, const
             bool tFromValue = iFrom.asBool();
             bool tToValue   = iTo.asBool();
             if( tFromValue != tToValue ) {
-                Json::Value mValData;
-                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
-                ciJsonDiff::append( mValData, "_NEW_", tToValue );
-                ciJsonDiff::append( *iParent, iName, mValData );
+                push( *iParent, "_OLD_", tFromValue );
+                push( *iParent, "_NEW_", tToValue );
             }
         }
         else if( tFromValType == VT_UINT ) {
             unsigned int tFromValue = iFrom.asUInt();
             unsigned int tToValue   = iTo.asUInt();
             if( tFromValue != tToValue ) {
-                Json::Value mValData;
-                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
-                ciJsonDiff::append( mValData, "_NEW_", tToValue );
-                ciJsonDiff::append( *iParent, iName, mValData );
+                push( *iParent, "_OLD_", tFromValue );
+                push( *iParent, "_NEW_", tToValue );
             }
         }
         else if( tFromValType == VT_INT ) {
             int tFromValue = iFrom.asInt();
             int tToValue   = iTo.asInt();
             if( tFromValue != tToValue ) {
-                Json::Value mValData;
-                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
-                ciJsonDiff::append( mValData, "_NEW_", tToValue );
-                ciJsonDiff::append( *iParent, iName, mValData );
+                push( *iParent, "_OLD_", tFromValue );
+                push( *iParent, "_NEW_", tToValue );
             }
         }
         else if( tFromValType == VT_DOUBLE ) {
             double tFromValue = iFrom.asDouble();
             double tToValue   = iTo.asDouble();
             if( tFromValue != tToValue ) {
-                Json::Value mValData;
-                ciJsonDiff::append( mValData, "_OLD_", tFromValue );
-                ciJsonDiff::append( mValData, "_NEW_", tToValue );
-                ciJsonDiff::append( *iParent, iName, mValData );
+                push( *iParent, "_OLD_", tFromValue );
+                push( *iParent, "_NEW_", tToValue );
             }
         }
         else if( tFromValType == VT_STRING ) {
             string tFromValue = iFrom.asString();
             string tToValue   = iTo.asString();
             if( tFromValue.compare( tToValue ) != 0 ) {
-                Json::Value mValData;
-                ciJsonDiff::append( *iParent, "_OLD_", tFromValue );
-                ciJsonDiff::append( *iParent, "_NEW_", tToValue );
-                //ciJsonDiff::append( *iParent, iName, mValData );
+                push( *iParent, "_OLD_", tFromValue );
+                push( *iParent, "_NEW_", tToValue );
             }
-        }
-        else {
-            // UKNOWN VALUE TYPE.
         }
     }
     // Handle different value types
     else {
-        Json::Value mValData;
-        ciJsonDiff::append( mValData, "_OLD_", iFrom );
-        ciJsonDiff::append( mValData, "_NEW_", iTo );
-        ciJsonDiff::append( *iParent, iName, mValData );
+        push( *iParent, "_OLD_", iFrom );
+        push( *iParent, "_NEW_", iTo );
     }
 }
 
-Json::Value ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFrom, const Json::Value& iTo) {
+Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName) {
     Json::Value tThis;
     
     // Get node types:
@@ -187,8 +163,8 @@ Json::Value ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFro
             // Iterate INTERSECTION items:
             if( !tIntersection.empty() ) {
                 for(set<string>::iterator it = tIntersection.begin(); it != tIntersection.end(); it++) {
-                    Json::Value tVal = diffObjects( *it, iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ) );
-                    if( !tVal.isNull() ) { append( tThis, *it, tVal ); }
+                    Json::Value tVal = diffObjects( iFrom.get( *it, Json::Value::null ), iTo.get( *it, Json::Value::null ), *it );
+                    if( !tVal.isNull() ) { push( tThis, *it, tVal ); }
                 }
             }
             // Iterate FROM only items:
@@ -196,34 +172,46 @@ Json::Value ciJsonDiff::diffObjects(const string& iName, const Json::Value& iFro
                 Json::Value tDeletedValues;
                 for(set<string>::iterator it = tFromOnly.begin(); it != tFromOnly.end(); it++) {
                     Json::Value tVal = iFrom.get( *it, Json::Value::null );
-                    if( !tVal.isNull() ) { ciJsonDiff::append( tDeletedValues, *it, tVal ); }
+                    if( !tVal.isNull() ) { push( tDeletedValues, *it, tVal ); }
                 }
-                if( !tDeletedValues.isNull() && !tDeletedValues.empty() ) { append( tThis, "_DELETED_", tDeletedValues ); }
+                if( !tDeletedValues.isNull() && !tDeletedValues.empty() ) { push( tThis, "_DELETED_", tDeletedValues ); }
             }
             // Iterate TO only items:
             if( !tToOnly.empty() ) {
                 Json::Value tAddedValues;
                 for(set<string>::iterator it = tToOnly.begin(); it != tToOnly.end(); it++) {
                     Json::Value tVal = iTo.get( *it, Json::Value::null );
-                    if( !tVal.isNull() ) { ciJsonDiff::append( tAddedValues, *it, tVal ); }
+                    if( !tVal.isNull() ) { push( tAddedValues, *it, tVal ); }
                 }
-                if( !tAddedValues.isNull() && !tAddedValues.empty() ) { append( tThis, "_ADDED_", tAddedValues ); }
+                if( !tAddedValues.isNull() && !tAddedValues.empty() ) { push( tThis, "_ADDED_", tAddedValues ); }
             }
         }
         // Value comparison:
         else if( tFromType != VT_NULL ) {
-            diffValues( iName, iFrom, iTo, &tThis );
+            diffValues( iFrom, iTo, &tThis );
         }
     }
     // Otherwise, delete old and add new:
     else {
         Json::Value mValData;
-        ciJsonDiff::append( mValData, "_OLD_", iFrom );
-        ciJsonDiff::append( mValData, "_NEW_", iTo );
-        ciJsonDiff::append( tThis, iName, mValData );
+        push( mValData, "_OLD_", iFrom );
+        push( mValData, "_NEW_", iTo );
+        push( tThis, iName, mValData );
     }
     
     return tThis;
+}
+
+int ciJsonDiff::getValueType(const Json::Value& iValue) {
+    if     ( iValue.isNull() )     { return VT_NULL; }
+    else if( iValue.isArray() )    { return VT_ARRAY; }
+    else if( iValue.isObject() )   { return VT_OBJECT; }
+    else if( iValue.isBool() )     { return VT_BOOL; }
+    else if( iValue.isUInt() )     { return VT_UINT; }
+    else if( iValue.isInt() )      { return VT_INT; }
+    else if( iValue.isDouble() )   { return VT_DOUBLE; }
+    else if( iValue.isString() )   { return VT_STRING; }
+    return VT_NULL;
 }
 
 bool ciJsonDiff::readFile(string iFileName, string* iFileOutput) {
@@ -240,80 +228,59 @@ bool ciJsonDiff::readFile(string iFileName, string* iFileOutput) {
     return false;
 }
 
-void ciJsonDiff::append(Json::Value & object, const string & key, bool value) { object[key] = Json::Value(value); }
-void ciJsonDiff::append(Json::Value & object, const string & key, const char * value) { object[key] = Json::Value(value); }
-void ciJsonDiff::append(Json::Value & object, const string & key, double value) { object[key] = Json::Value(value); }
-void ciJsonDiff::append(Json::Value & object, const string & key, float value) { object[key] = Json::Value(value); }
-void ciJsonDiff::append(Json::Value & object, const string & key, int32_t value) { object[key] = Json::Value(value); }
-void ciJsonDiff::append(Json::Value & object, const string & key, string value) { object[key] = Json::Value(value.c_str()); }
-void ciJsonDiff::append(Json::Value & object, const string & key, uint32_t value) { object[key] = Json::Value(value); }
-void ciJsonDiff::append(Json::Value & object, const string & key, Json::Value value) { object[key] = value; }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, bool iValue)          { iObject[iKey] = Json::Value(iValue); }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, const char* iValue)   { iObject[iKey] = Json::Value(iValue); }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, double iValue)        { iObject[iKey] = Json::Value(iValue); }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, float iValue)         { iObject[iKey] = Json::Value(iValue); }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, int32_t iValue)       { iObject[iKey] = Json::Value(iValue); }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, string iValue)        { iObject[iKey] = Json::Value(iValue.c_str()); }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, uint32_t iValue)      { iObject[iKey] = Json::Value(iValue); }
+void ciJsonDiff::push(Json::Value &iObject, const string &iKey, Json::Value iValue)   { iObject[iKey] = iValue; }
 
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<bool> values)
-{
-    for (vector<bool>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
-}
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<const char *> values)
-{
-    for (vector<const char *>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
-}
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<double> values)
-{
-    for (vector<double>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
-}
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<float> values)
-{
-    for (vector<float>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
-}
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<int32_t> values)
-{
-    for (vector<int32_t>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
-}
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<string> values)
-{
-    for (vector<string>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
-}
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<uint32_t> values)
-{
-    for (vector<uint32_t>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
-}
-void ciJsonDiff::append(Json::Value & object, const string & key, vector<Json::Value> values)
-{
-    for (vector<Json::Value>::const_iterator memberIt = values.begin(); memberIt != values.end(); ++memberIt)
-        object[key].append(* memberIt);
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<bool> iValues) {
+    for(vector<bool>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-Json::Value ciJsonDiff::deserialize(const string& iValue, bool iStrict, bool iComments) {
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<const char*> iValues) {
+    for(vector<const char *>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
+}
+
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<double> iValues) {
+    for(vector<double>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
+}
+
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<float> iValues) {
+    for(vector<float>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
+}
+
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<int32_t> iValues) {
+    for(vector<int32_t>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
+}
+
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<string> iValues) {
+    for(vector<string>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
+}
+
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<uint32_t> iValues) {
+    for(vector<uint32_t>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
+}
+
+void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<Json::Value> iValues) {
+    for(vector<Json::Value>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
+}
+
+Json::Value ciJsonDiff::deserialize(const string& iValue, bool *iErr, bool iStrict, bool iComments) {
     Json::Features features;
 	features.allowComments_ = iComments;
 	features.strictRoot_ = iStrict;
 	Json::Reader reader( features );    
     Json::Value root;
     try { reader.parse( iValue, root ); }
-    catch(...) { console() << "Error deserializing JSON: " << iValue << endl; }
+    catch(...) { *iErr = true; console() << "Error deserializing JSON: " << iValue << endl; }
     return root;
 }
 
 string ciJsonDiff::serialize(const Json::Value& iValue) {
     Json::StyledWriter writer;
     return writer.write( iValue );
-}
-
-int ciJsonDiff::getValueType(const Json::Value& iValue) {
-    if     ( iValue.isNull() )     { return VT_NULL; }
-    else if( iValue.isArray() )    { return VT_ARRAY; }
-    else if( iValue.isObject() )   { return VT_OBJECT; }
-    else if( iValue.isBool() )     { return VT_BOOL; }
-    else if( iValue.isUInt() )     { return VT_UINT; }
-    else if( iValue.isInt() )      { return VT_INT; }
-    else if( iValue.isDouble() )   { return VT_DOUBLE; }
-    else if( iValue.isString() )   { return VT_STRING; }
-    return VT_NULL;
 }
