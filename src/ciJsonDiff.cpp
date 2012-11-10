@@ -35,26 +35,26 @@
 ciJsonDiff::ciJsonDiff() {
 }
 
-string ciJsonDiff::diff(fs::path iFrom, fs::path iTo, bool iStrict, bool iComments) {
+string ciJsonDiff::diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions) {
     string tFrom, tTo;
     if( readFile( iFrom.string(), &tFrom ) && readFile( iTo.string(), &tTo ) ) {
-        return diff( tFrom, tTo, iStrict, iComments );
+        return diff( tFrom, tTo, iOptions );
     }
     return "";
 }
 
-string ciJsonDiff::diff(string iFrom, string iTo, bool iStrict, bool iComments) {
+string ciJsonDiff::diff(string iFrom, string iTo, const DiffOptions& iOptions) {
     bool tErrFrom = false;
     bool tErrTo   = false;
     Json::Value tFrom, tTo;
-    tFrom = deserialize( iFrom, &tErrFrom, iStrict, iComments );
-    tTo   = deserialize( iTo, &tErrTo, iStrict, iComments );
+    tFrom = deserialize( iFrom, &tErrFrom, iOptions );
+    tTo   = deserialize( iTo, &tErrTo, iOptions );
     
     if( !tErrFrom && !tErrTo ) { return serialize( diff( tFrom, tTo ) ); }
     return "";
 }
 
-Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo) {
+Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo, const DiffOptions& iOptions) {
     // This method compares two root-level JSON trees:
     
     // Prepare a JSON-encoded diff tree:
@@ -67,7 +67,7 @@ Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo) {
     return tDiff;
 }
 
-void ciJsonDiff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent) {
+void ciJsonDiff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent, const DiffOptions& iOptions) {
     int tFromValType = getValueType( iFrom );
     int tToValType   = getValueType( iTo );
     // Handle same value types
@@ -76,53 +76,55 @@ void ciJsonDiff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Js
             bool tFromValue = iFrom.asBool();
             bool tToValue   = iTo.asBool();
             if( tFromValue != tToValue ) {
-                push( *iParent, "_OLD_", tFromValue );
-                push( *iParent, "_NEW_", tToValue );
+                if( iOptions.mInclPatchBward ) { push( *iParent, "_OLD_", tFromValue ); }
+                if( iOptions.mInclPatchFward ) { push( *iParent, "_NEW_", tToValue ); }
             }
         }
         else if( tFromValType == VT_UINT ) {
             unsigned int tFromValue = iFrom.asUInt();
             unsigned int tToValue   = iTo.asUInt();
             if( tFromValue != tToValue ) {
-                push( *iParent, "_OLD_", tFromValue );
-                push( *iParent, "_NEW_", tToValue );
+                if( iOptions.mInclPatchBward ) { push( *iParent, "_OLD_", tFromValue ); }
+                if( iOptions.mInclPatchFward ) { push( *iParent, "_NEW_", tToValue ); }
             }
         }
         else if( tFromValType == VT_INT ) {
             int tFromValue = iFrom.asInt();
             int tToValue   = iTo.asInt();
             if( tFromValue != tToValue ) {
-                push( *iParent, "_OLD_", tFromValue );
-                push( *iParent, "_NEW_", tToValue );
+                if( iOptions.mInclPatchBward ) { push( *iParent, "_OLD_", tFromValue ); }
+                if( iOptions.mInclPatchFward ) { push( *iParent, "_NEW_", tToValue ); }
             }
         }
         else if( tFromValType == VT_DOUBLE ) {
             double tFromValue = iFrom.asDouble();
             double tToValue   = iTo.asDouble();
             if( tFromValue != tToValue ) {
-                push( *iParent, "_OLD_", tFromValue );
-                push( *iParent, "_NEW_", tToValue );
+                if( iOptions.mInclPatchBward ) { push( *iParent, "_OLD_", tFromValue ); }
+                if( iOptions.mInclPatchFward ) { push( *iParent, "_NEW_", tToValue ); }
             }
         }
         else if( tFromValType == VT_STRING ) {
             string tFromValue = iFrom.asString();
             string tToValue   = iTo.asString();
             if( tFromValue.compare( tToValue ) != 0 ) {
-                push( *iParent, "_OLD_", tFromValue );
-                push( *iParent, "_NEW_", tToValue );
+                if( iOptions.mInclPatchBward ) { push( *iParent, "_OLD_", tFromValue ); }
+                if( iOptions.mInclPatchFward ) { push( *iParent, "_NEW_", tToValue ); }
             }
         }
     }
     // Handle different value types
     else {
         // TODO: Check this case:
-        push( *iParent, "_OLD_", iFrom );
-        push( *iParent, "_NEW_", iTo );
+        if( iOptions.mInclPatchBward ) { push( *iParent, "_OLD_", iFrom ); }
+        if( iOptions.mInclPatchFward ) { push( *iParent, "_NEW_", iTo ); }
     }
 }
 
-Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName) {
+Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName, const DiffOptions& iOptions) {
     Json::Value tThis;
+    
+    // TODO: integrate iOptions...
     
     // Get node types:
     int tFromType = getValueType( iFrom );
@@ -293,10 +295,10 @@ void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<Json::
     for(vector<Json::Value>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-Json::Value ciJsonDiff::deserialize(const string& iValue, bool *iErr, bool iStrict, bool iComments) {
+Json::Value ciJsonDiff::deserialize(const string& iValue, bool *iErr, const DiffOptions& iOptions) {
     Json::Features features;
-	features.allowComments_ = iComments;
-	features.strictRoot_ = iStrict;
+	features.allowComments_ = iOptions.mComments;
+	features.strictRoot_ = iOptions.mStrict;
 	Json::Reader reader( features );    
     Json::Value root;
     try { reader.parse( iValue, root ); }

@@ -46,17 +46,33 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+struct DiffOptions {
+    DiffOptions(bool iStrict = true, bool iComments = true, bool iInclPatchFward = true, bool iInclPatchBward = true) {
+        mStrict         = iStrict;
+        mComments       = iComments;
+        mInclPatchFward = iInclPatchFward;
+        mInclPatchBward = iInclPatchBward;
+    }
+    
+    bool strict()        { return mStrict; }
+    bool comments()      { return mComments; }
+    bool patchForward()  { return mInclPatchFward; }
+    bool patchBackward() { return mInclPatchBward; }
+    
+    bool mStrict, mComments, mInclPatchFward, mInclPatchBward;
+};
+
 class ciJsonDiff {
 public:
     ciJsonDiff();
     
-    static string           diff(fs::path iFrom, fs::path iTo, bool iStrict = true, bool iComments = false);
-    static string           diff(string iFrom, string iTo, bool iStrict = true, bool iComments = false);
-    static Json::Value      diff(Json::Value iFrom, Json::Value iTo);
+    static string           diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions = DiffOptions());
+    static string           diff(string iFrom, string iTo, const DiffOptions& iOptions = DiffOptions());
+    static Json::Value      diff(Json::Value iFrom, Json::Value iTo, const DiffOptions& iOptions = DiffOptions());
     
 protected:
-    static Json::Value      diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName = "");
-    static void             diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent);
+    static Json::Value      diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName = "", const DiffOptions& iOptions = DiffOptions());
+    static void             diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent, const DiffOptions& iOptions = DiffOptions());
     
     static int              getValueType(const Json::Value& iValue);
     
@@ -85,6 +101,6 @@ protected:
     static void             pushArr(Json::Value &iObject, const string &iKey, vector<Json::Value> iValues);
     
     // Serialization helpers:
-    static Json::Value      deserialize(const string& iValue, bool *iErr, bool iStrict = true, bool iComments = false);
+    static Json::Value      deserialize(const string& iValue, bool *iErr, const DiffOptions& iOptions = DiffOptions());
     static string           serialize(const Json::Value& iValue);
 };
