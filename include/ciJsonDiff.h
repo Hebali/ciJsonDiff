@@ -70,16 +70,6 @@ public:
     static string           diff(string iFrom, string iTo, const DiffOptions& iOptions = DiffOptions());
     static Json::Value      diff(Json::Value iFrom, Json::Value iTo, const DiffOptions& iOptions = DiffOptions());
     
-protected:
-    static Json::Value      diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName = "", const DiffOptions& iOptions = DiffOptions());
-    static void             diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent, const DiffOptions& iOptions = DiffOptions());
-    
-    static int              getValueType(const Json::Value& iValue);
-    
-    static bool             readFile(string iFileName, string* iFileOutput);
-    
-    enum JsonValTypes       { VT_NULL, VT_ARRAY, VT_OBJECT, VT_BOOL, VT_DOUBLE, VT_UINT, VT_INT, VT_STRING };
-    
     // Value helpers:
     static void             push(Json::Value &iObject, const string &iKey, bool iValue);
     static void             push(Json::Value &iObject, const string &iKey, const char* iValue);
@@ -103,4 +93,14 @@ protected:
     // Serialization helpers:
     static Json::Value      deserialize(const string& iValue, bool *iErr, const DiffOptions& iOptions = DiffOptions());
     static string           serialize(const Json::Value& iValue);
+    
+protected:
+    static Json::Value      diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName = "", const DiffOptions& iOptions = DiffOptions());
+    static void             diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent, const DiffOptions& iOptions = DiffOptions());
+    
+    static int              getValueType(const Json::Value& iValue);
+    
+    static bool             readFile(string iFileName, string* iFileOutput);
+    
+    enum JsonValTypes       { VT_NULL, VT_ARRAY, VT_OBJECT, VT_BOOL, VT_DOUBLE, VT_UINT, VT_INT, VT_STRING };
 };
