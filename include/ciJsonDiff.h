@@ -46,6 +46,8 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+namespace Json {
+
 struct DiffOptions {
     DiffOptions(bool iStrict = true, bool iComments = true, bool iInclPatchFward = true, bool iInclPatchBward = true) {
         mStrict         = iStrict;
@@ -62,9 +64,9 @@ struct DiffOptions {
     bool mStrict, mComments, mInclPatchFward, mInclPatchBward;
 };
 
-class ciJsonDiff {
+class Diff {
 public:
-    ciJsonDiff();
+    Diff(){}
     
     static string           diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions = DiffOptions());
     static string           diff(string iFrom, string iTo, const DiffOptions& iOptions = DiffOptions());
@@ -104,3 +106,5 @@ protected:
     
     enum JsonValTypes       { VT_NULL, VT_ARRAY, VT_OBJECT, VT_BOOL, VT_DOUBLE, VT_UINT, VT_INT, VT_STRING };
 };
+    
+} // namespace Json

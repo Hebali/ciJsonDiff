@@ -1,5 +1,5 @@
 /*
- ciJsonDiff
+ Diff
  by Patrick J. Hebron
  http://patrickhebron.com
  
@@ -32,10 +32,9 @@
 
 #include "ciJsonDiff.h"
 
-ciJsonDiff::ciJsonDiff() {
-}
+using namespace Json;
 
-string ciJsonDiff::diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions) {
+string Diff::diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions) {
     string tFrom, tTo;
     if( readFile( iFrom.string(), &tFrom ) && readFile( iTo.string(), &tTo ) ) {
         return diff( tFrom, tTo, iOptions );
@@ -43,7 +42,7 @@ string ciJsonDiff::diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOption
     return "";
 }
 
-string ciJsonDiff::diff(string iFrom, string iTo, const DiffOptions& iOptions) {
+string Diff::diff(string iFrom, string iTo, const DiffOptions& iOptions) {
     bool tErrFrom = false;
     bool tErrTo   = false;
     Json::Value tFrom, tTo;
@@ -54,7 +53,7 @@ string ciJsonDiff::diff(string iFrom, string iTo, const DiffOptions& iOptions) {
     return "";
 }
 
-Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo, const DiffOptions& iOptions) {
+Json::Value Diff::diff(Json::Value iFrom, Json::Value iTo, const DiffOptions& iOptions) {
     // This method compares two root-level JSON trees:
     
     // Prepare a JSON-encoded diff tree:
@@ -67,7 +66,7 @@ Json::Value ciJsonDiff::diff(Json::Value iFrom, Json::Value iTo, const DiffOptio
     return tDiff;
 }
 
-void ciJsonDiff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent, const DiffOptions& iOptions) {
+void Diff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Json::Value* iParent, const DiffOptions& iOptions) {
     int tFromValType = getValueType( iFrom );
     int tToValType   = getValueType( iTo );
     // Handle same value types
@@ -121,7 +120,7 @@ void ciJsonDiff::diffValues(const Json::Value& iFrom, const Json::Value& iTo, Js
     }
 }
 
-Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName, const DiffOptions& iOptions) {
+Json::Value Diff::diffObjects(const Json::Value& iFrom, const Json::Value& iTo, const string& iName, const DiffOptions& iOptions) {
     Json::Value tThis;
     
     // TODO: integrate iOptions...
@@ -228,7 +227,7 @@ Json::Value ciJsonDiff::diffObjects(const Json::Value& iFrom, const Json::Value&
     return tThis;
 }
 
-int ciJsonDiff::getValueType(const Json::Value& iValue) {
+int Diff::getValueType(const Json::Value& iValue) {
     if     ( iValue.isNull() )     { return VT_NULL; }
     else if( iValue.isArray() )    { return VT_ARRAY; }
     else if( iValue.isObject() )   { return VT_OBJECT; }
@@ -240,7 +239,7 @@ int ciJsonDiff::getValueType(const Json::Value& iValue) {
     return VT_NULL;
 }
 
-bool ciJsonDiff::readFile(string iFileName, string* iFileOutput) {
+bool Diff::readFile(string iFileName, string* iFileOutput) {
     string      tLine;
     ifstream    tFile( iFileName.c_str() );
     if(tFile.is_open()) {
@@ -254,48 +253,48 @@ bool ciJsonDiff::readFile(string iFileName, string* iFileOutput) {
     return false;
 }
 
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, bool iValue)          { iObject[iKey] = Json::Value(iValue); }
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, const char* iValue)   { iObject[iKey] = Json::Value(iValue); }
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, double iValue)        { iObject[iKey] = Json::Value(iValue); }
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, float iValue)         { iObject[iKey] = Json::Value(iValue); }
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, int32_t iValue)       { iObject[iKey] = Json::Value(iValue); }
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, string iValue)        { iObject[iKey] = Json::Value(iValue.c_str()); }
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, uint32_t iValue)      { iObject[iKey] = Json::Value(iValue); }
-void ciJsonDiff::push(Json::Value &iObject, const string &iKey, Json::Value iValue)   { iObject[iKey] = iValue; }
+void Diff::push(Json::Value &iObject, const string &iKey, bool iValue)          { iObject[iKey] = Json::Value(iValue); }
+void Diff::push(Json::Value &iObject, const string &iKey, const char* iValue)   { iObject[iKey] = Json::Value(iValue); }
+void Diff::push(Json::Value &iObject, const string &iKey, double iValue)        { iObject[iKey] = Json::Value(iValue); }
+void Diff::push(Json::Value &iObject, const string &iKey, float iValue)         { iObject[iKey] = Json::Value(iValue); }
+void Diff::push(Json::Value &iObject, const string &iKey, int32_t iValue)       { iObject[iKey] = Json::Value(iValue); }
+void Diff::push(Json::Value &iObject, const string &iKey, string iValue)        { iObject[iKey] = Json::Value(iValue.c_str()); }
+void Diff::push(Json::Value &iObject, const string &iKey, uint32_t iValue)      { iObject[iKey] = Json::Value(iValue); }
+void Diff::push(Json::Value &iObject, const string &iKey, Json::Value iValue)   { iObject[iKey] = iValue; }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<bool> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<bool> iValues) {
     for(vector<bool>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<const char*> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<const char*> iValues) {
     for(vector<const char *>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<double> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<double> iValues) {
     for(vector<double>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<float> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<float> iValues) {
     for(vector<float>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<int32_t> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<int32_t> iValues) {
     for(vector<int32_t>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<string> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<string> iValues) {
     for(vector<string>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<uint32_t> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<uint32_t> iValues) {
     for(vector<uint32_t>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-void ciJsonDiff::pushArr(Json::Value &iObject, const string &iKey, vector<Json::Value> iValues) {
+void Diff::pushArr(Json::Value &iObject, const string &iKey, vector<Json::Value> iValues) {
     for(vector<Json::Value>::const_iterator it = iValues.begin(); it != iValues.end(); ++it) { iObject[iKey].append(*it); }
 }
 
-Json::Value ciJsonDiff::deserialize(const string& iValue, bool *iErr, const DiffOptions& iOptions) {
+Json::Value Diff::deserialize(const string& iValue, bool *iErr, const DiffOptions& iOptions) {
     Json::Features features;
 	features.allowComments_ = iOptions.mComments;
 	features.strictRoot_ = iOptions.mStrict;
@@ -306,7 +305,7 @@ Json::Value ciJsonDiff::deserialize(const string& iValue, bool *iErr, const Diff
     return root;
 }
 
-string ciJsonDiff::serialize(const Json::Value& iValue) {
+string Diff::serialize(const Json::Value& iValue) {
     Json::StyledWriter writer;
     return writer.write( iValue );
 }
