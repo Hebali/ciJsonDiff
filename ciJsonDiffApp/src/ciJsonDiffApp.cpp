@@ -16,7 +16,7 @@ class ciJsonDiffApp : public AppBasic {
 };
 
 void ciJsonDiffApp::setup() {
-    string tDiff = ciJsonDiff::diff( fs::path( getResourcePath() / "testA.json" ), fs::path( fs::path( getResourcePath() / "testB.json" ) ) );
+    string tDiff = Json::Diff::diff( fs::path( getResourcePath() / "testA.json" ), fs::path( fs::path( getResourcePath() / "testB.json" ) ) );
     cout << tDiff << endl;
 }
 
