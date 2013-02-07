@@ -49,17 +49,17 @@ using namespace std;
 namespace Json {
 
 struct DiffOptions {
-    DiffOptions(bool iStrict = true, bool iComments = true, bool iInclPatchFward = true, bool iInclPatchBward = true) {
+    DiffOptions(const bool& iStrict = true, const bool& iComments = true, const bool& iInclPatchFward = true, const bool& iInclPatchBward = true) {
         mStrict         = iStrict;
         mComments       = iComments;
         mInclPatchFward = iInclPatchFward;
         mInclPatchBward = iInclPatchBward;
     }
     
-    bool strict()        { return mStrict; }
-    bool comments()      { return mComments; }
-    bool patchForward()  { return mInclPatchFward; }
-    bool patchBackward() { return mInclPatchBward; }
+    bool strict()        const { return mStrict; }
+    bool comments()      const { return mComments; }
+    bool patchForward()  const { return mInclPatchFward; }
+    bool patchBackward() const { return mInclPatchBward; }
     
     bool mStrict, mComments, mInclPatchFward, mInclPatchBward;
 };
@@ -68,9 +68,9 @@ class Diff {
 public:
     Diff(){}
     
-    static string           diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions = DiffOptions());
-    static string           diff(string iFrom, string iTo, const DiffOptions& iOptions = DiffOptions());
-    static Json::Value      diff(Json::Value iFrom, Json::Value iTo, const DiffOptions& iOptions = DiffOptions());
+    static string           diff(const fs::path& iFrom, const fs::path& iTo, const DiffOptions& iOptions = DiffOptions());
+    static string           diff(const string& iFrom, const string& iTo, const DiffOptions& iOptions = DiffOptions());
+    static Json::Value      diff(const Json::Value& iFrom, const Json::Value& iTo, const DiffOptions& iOptions = DiffOptions());
     
     // Value helpers:
     static void             push(Json::Value &iObject, const string &iKey, bool iValue);
@@ -102,7 +102,7 @@ protected:
     
     static int              getValueType(const Json::Value& iValue);
     
-    static bool             readFile(string iFileName, string* iFileOutput);
+    static bool             readFile(const string& iFileName, string* iFileOutput);
     
     enum JsonValTypes       { VT_NULL, VT_ARRAY, VT_OBJECT, VT_BOOL, VT_DOUBLE, VT_UINT, VT_INT, VT_STRING };
 };

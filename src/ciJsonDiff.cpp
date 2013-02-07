@@ -34,7 +34,7 @@
 
 using namespace Json;
 
-string Diff::diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions) {
+string Diff::diff(const fs::path& iFrom, const fs::path& iTo, const DiffOptions& iOptions) {
     string tFrom, tTo;
     if( readFile( iFrom.string(), &tFrom ) && readFile( iTo.string(), &tTo ) ) {
         return diff( tFrom, tTo, iOptions );
@@ -42,7 +42,7 @@ string Diff::diff(fs::path iFrom, fs::path iTo, const DiffOptions& iOptions) {
     return "";
 }
 
-string Diff::diff(string iFrom, string iTo, const DiffOptions& iOptions) {
+string Diff::diff(const string& iFrom, const string& iTo, const DiffOptions& iOptions) {
     bool tErrFrom = false;
     bool tErrTo   = false;
     Json::Value tFrom, tTo;
@@ -53,9 +53,8 @@ string Diff::diff(string iFrom, string iTo, const DiffOptions& iOptions) {
     return "";
 }
 
-Json::Value Diff::diff(Json::Value iFrom, Json::Value iTo, const DiffOptions& iOptions) {
+Json::Value Diff::diff(const Json::Value& iFrom, const Json::Value& iTo, const DiffOptions& iOptions) {
     // This method compares two root-level JSON trees:
-    
     // Prepare a JSON-encoded diff tree:
     Json::Value tDiff;
     // Check that each root node is an object:
@@ -239,7 +238,7 @@ int Diff::getValueType(const Json::Value& iValue) {
     return VT_NULL;
 }
 
-bool Diff::readFile(string iFileName, string* iFileOutput) {
+bool Diff::readFile(const string& iFileName, string* iFileOutput) {
     string      tLine;
     ifstream    tFile( iFileName.c_str() );
     if(tFile.is_open()) {
