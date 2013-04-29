@@ -12,6 +12,9 @@ should therefore be usable with any application that integrates JsonCpp.
 JsonCpp: http://sourceforge.net/projects/jsoncpp
 Cinder:  http://libcinder.org
 
+Example usage:
+string tDiff = Json::Diff::diff( fs::path( getResourcePath() / "testA.json" ), fs::path( fs::path( getResourcePath() / "testB.json" ) ) );
+
 LICENSE:
 
 Copyright (c) 2012, Patrick J. Hebron
